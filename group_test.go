@@ -14,7 +14,7 @@ var db = map[string]string{
 
 func TestGroupGet(t *testing.T) {
 	loadCounts := make(map[string]int, len(db))
-	gee := NewGroup("scores", 2<<10, GetterFunc(
+	NewGroup("scores", 2<<10, GetterFunc(
 		func(key string) ([]byte, error) {
 			log.Println("[SlowDB] search key", key)
 			if v, ok := db[key]; ok {
@@ -26,6 +26,10 @@ func TestGroupGet(t *testing.T) {
 			}
 			return nil, fmt.Errorf("%s not exist", key)
 		}))
+	gee := GetGroup("scores")
+	if gee == nil {
+		t.Fatal("gee is nil")
+	}
 
 	for k, v := range db {
 		if view, err := gee.Get(k); err != nil || view.String() != v {
