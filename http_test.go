@@ -33,8 +33,8 @@ func TestHttp(t *testing.T) {
 	addr := "localhost:8666"
 	HttpServer := NewHttpServer(addr)
 	go HttpServer.Run()
-	
-	resp,err  := http.Get("http://" + addr + DefaultBasePath + "/get/scores/Tom")
+
+	resp, err := http.Get("http://" + addr + DefaultBasePath + "/get/scores/Tom")
 	if err != nil {
 		t.Fatal(err)
 	}
