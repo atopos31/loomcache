@@ -1,12 +1,13 @@
-package loomcache
+package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"testing"
+
+	"github.com/atopos31/loomcache/cache"
 )
 
 var httpdb = map[string]string{
@@ -17,7 +18,7 @@ var httpdb = map[string]string{
 
 func TestHttp(t *testing.T) {
 	loadCounts := make(map[string]int, len(httpdb))
-	NewGroup("scores", 2<<10, GetterFunc(
+	cache := cache.NewGroup("scores", 2<<10, cache.GetterFunc(
 		func(key string) ([]byte, error) {
 			log.Println("[SlowDB] search key", key)
 			if v, ok := httpdb[key]; ok {
@@ -32,7 +33,7 @@ func TestHttp(t *testing.T) {
 
 	addr := "localhost:8666"
 	HttpServer := NewHttpServer(addr)
-	go HttpServer.Run()
+	go HttpServer.RunCache(cache)
 
 	resp, err := http.Get("http://" + addr + DefaultBasePath + "/get/scores/Tom")
 	if err != nil {
@@ -47,13 +48,7 @@ func TestHttp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// 转为map
-	v := make(map[string]string)
-	err = json.Unmarshal(b, &v)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(v) != 1 || v["value"] != "630" {
-		t.Fatalf("expect 630, but got %v", v)
+	if string(b) != "630" {
+		t.Fatalf("expect 630, but got %v", string(b))
 	}
 }

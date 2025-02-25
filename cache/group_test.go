@@ -1,4 +1,4 @@
-package loomcache
+package cache
 
 import (
 	"fmt"

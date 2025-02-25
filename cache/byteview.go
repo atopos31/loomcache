@@ -1,4 +1,4 @@
-package loomcache
+package cache
 
 // ByteView 保存不可变的字节切片
 type ByteView struct {
