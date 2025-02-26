@@ -4,6 +4,8 @@ import (
 	"errors"
 	"log"
 	"sync"
+
+	"github.com/atopos31/loomcache/singleflight"
 )
 
 type Getter interface {
@@ -21,6 +23,7 @@ type Group struct {
 	getter    Getter
 	mainCache cache
 	peers     PeerPicker // get peer and get value
+	loader    *singleflight.Group
 }
 
 var (
@@ -40,6 +43,7 @@ func NewGroup(name string, cacheBytes int64, getter Getter) *Group {
 		mainCache: cache{
 			cacheBytes: cacheBytes,
 		},
+		loader: &singleflight.Group{},
 	}
 	groups[name] = group
 	return group
@@ -69,7 +73,13 @@ func (g *Group) Get(key string) (ByteView, error) {
 		return v, nil
 	}
 
-	return g.load(key)
+	viewi, err := g.loader.Do(key, func() (any, error) {
+		return g.load(key)
+	})
+	if err == nil {
+		return viewi.(ByteView), nil
+	}
+	return ByteView{}, err
 }
 
 func (g *Group) load(key string) (value ByteView, err error) {
