@@ -77,12 +77,11 @@ func (g *Group) load(key string) (value ByteView, err error) {
 		// 2 get key from peer
 		if peer, ok := g.peers.PickPeer(key); ok {
 			value, err := peer.Get(g.name, key)
-			if err != nil {
-				log.Printf("cache miss, key: %v,err: %v", key, err)
+			if err == nil {
+				log.Printf("cache hit,form peer:%s key: %v", peer, key)
+				return ByteView{b: cloneBytes(value)}, nil
 			}
-
-			log.Printf("cache hit,form peer:%s key: %v", peer, key)
-			return ByteView{b: cloneBytes(value)}, nil
+			log.Printf("cache miss,from peer:%s key: %v", peer, key)
 		}
 	}
 	// 3 get key from local

@@ -64,17 +64,17 @@ func (h *HttpServer) RunCache(cache *cache.Group) {
 			group := c.Param("group")
 			key := c.Param("key")
 			if group == "" || key == "" {
-				c.JSON(400, gin.H{
+				c.JSON(http.StatusBadRequest, gin.H{
 					"error": "group or key is empty",
 				})
 				return
 			}
 			if value, err := cache.Get(key); err != nil {
-				c.JSON(500, gin.H{
+				c.JSON(http.StatusNotFound, gin.H{
 					"error": err.Error(),
 				})
 			} else {
-				c.String(200, value.String())
+				c.String(http.StatusOK, value.String())
 			}
 		})
 
@@ -93,11 +93,11 @@ func (h *HttpServer) RunAPI(addr string, cache *cache.Group) {
 			return
 		}
 		if value, err := cache.Get(key); err != nil {
-			c.JSON(500, gin.H{
+			c.JSON(http.StatusNotFound, gin.H{
 				"error": err.Error(),
 			})
 		} else {
-			c.String(200, value.String())
+			c.String(http.StatusOK, value.String())
 		}
 	})
 	r.Run(addr)
