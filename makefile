@@ -10,3 +10,6 @@ build:
 
 tidy:
 	@go mod tidy
+
+vet:
+	@go vet ./...
