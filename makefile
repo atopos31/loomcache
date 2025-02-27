@@ -13,3 +13,6 @@ tidy:
 
 vet:
 	@go vet ./...
+
+proto:
+	@protoc --go_out=. ./proto/cache.proto

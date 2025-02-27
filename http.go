@@ -9,7 +9,9 @@ import (
 
 	"github.com/atopos31/loomcache/cache"
 	"github.com/atopos31/loomcache/consistenthash"
+	pb "github.com/atopos31/loomcache/proto"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/protobuf/proto"
 )
 
 const DefaultBasePath = "/loomcache/api"
@@ -69,13 +71,22 @@ func (h *HttpServer) RunCache(cache *cache.Group) {
 				})
 				return
 			}
-			if value, err := cache.Get(key); err != nil {
+			value, err := cache.Get(key)
+			if err != nil {
 				c.JSON(http.StatusNotFound, gin.H{
 					"error": err.Error(),
 				})
-			} else {
-				c.String(http.StatusOK, value.String())
+				return
 			}
+			body, err := proto.Marshal(&pb.Response{Value: value.ByteSlice()})
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": err.Error(),
+				})
+				return
+			}
+			c.Writer.Write(body)
+
 		})
 
 	}
@@ -110,13 +121,13 @@ type httpGetter struct {
 	baseURL string
 }
 
-func (h *httpGetter) Get(group string, key string) ([]byte, error) {
+func (h *httpGetter) Get(req *pb.Request) (*pb.Response, error) {
 	u := fmt.Sprintf(
 		"http://%s%v/get/%v/%v",
 		h.addr,
 		h.baseURL,
-		group,
-		key,
+		req.Group,
+		req.Key,
 	)
 	res, err := http.Get(u)
 	if err != nil {
@@ -127,5 +138,14 @@ func (h *httpGetter) Get(group string, key string) ([]byte, error) {
 		return nil, fmt.Errorf("server returned: %v", res.Status)
 	}
 
-	return io.ReadAll(res.Body)
+	result := &pb.Response{}
+	bytes, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading response body: %v", err)
+	}
+	if err := proto.Unmarshal(bytes, result); err != nil {
+		return nil, fmt.Errorf("decoding response body: %v", err)
+	}
+
+	return result, nil
 }

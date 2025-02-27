@@ -30,7 +30,7 @@ func (g *Group) Do(key string, fn CallFunc) (any, error) {
 		return c.val, c.err
 	}
 	log.Printf("cache miss singleflight, key: %v", key)
-	
+
 	c := new(call)
 	c.wg.Add(1)
 

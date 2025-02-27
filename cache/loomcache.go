@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/atopos31/loomcache/proto"
 	"github.com/atopos31/loomcache/singleflight"
 )
 
@@ -86,12 +87,16 @@ func (g *Group) load(key string) (value ByteView, err error) {
 	if g.peers != nil {
 		// 2 get key from peer
 		if peer, ok := g.peers.PickPeer(key); ok {
-			value, err := peer.Get(g.name, key)
+			req := &proto.Request{
+				Group: g.name,
+				Key:   key,
+			}
+			res, err := peer.Get(req)
 			if err == nil {
 				log.Printf("cache hit,form peer:%s key: %v", peer, key)
-				return ByteView{b: cloneBytes(value)}, nil
+				return ByteView{b: cloneBytes(res.Value)}, nil
 			}
-			log.Printf("cache miss,from peer:%s key: %v", peer, key)
+			log.Printf("cache miss,from peer:%s key: %v,err: %v", peer, key, err)
 		}
 	}
 	// 3 get key from local
